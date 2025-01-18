@@ -1,0 +1,5 @@
+class Config:
+    SECRET_KEY = 'your_secret_key_here'
+    DEBUG = True
+    AZURE_SPEECH_KEY = 'DFHBZWKrHVilrllGkCZyC7Y6WCOntdSjB9JuZeraRJCeEkYRbAqMJQQJ99BAACYeBjFXJ3w3AAAYACOGMP2K'
+    AZURE_SPEECH_REGION = 'eastus'
