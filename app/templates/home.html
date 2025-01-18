@@ -9,10 +9,10 @@
 
   <body>
     <h1>Speaker Recognition PoC</h1>
-    <form action="{{ url_for('app.upload') }}" method="post" enctype="multipart/form-data">
-      <input type="file" name="file">
-      <button type="submit">Upload</button>
-    </form>
+    <button id="startBtn">Start</button>
+    <button id="endBtn" disabled>End</button>
+    <button id="downloadBtn" disabled>Download Transcript</button>
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
   </body>
 
 </html>

@@ -1,40 +1,61 @@
-from flask import Blueprint, render_template, request, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, jsonify, current_app
 import os
+import wave
+import pyaudio
+import threading
 from azure.cognitiveservices.speech import SpeechConfig, SpeechRecognizer, AudioConfig, ResultReason, CancellationReason
 import logging
 
 app = Blueprint('app', __name__)
 
+# Global variables for recording
+is_recording = False
+frames = []
+recording_thread = None
+
 @app.route('/')
 def home():
     return render_template('home.html')
 
-@app.route('/about')
-def about():
-    return render_template('about.html')
+@app.route('/start_recording', methods=['POST'])
+def start_recording():
+    global is_recording, frames, recording_thread
+    is_recording = True
+    frames = []
+    recording_thread = threading.Thread(target=record_audio)
+    recording_thread.start()
+    return jsonify({'status': 'Recording started'})
 
-@app.route('/submit', methods=['POST'])
-def submit():
-    data = request.form['data']
-    # Process the data here
-    return redirect(url_for('app.home'))
+@app.route('/stop_recording', methods=['POST'])
+def stop_recording():
+    global is_recording, recording_thread
+    is_recording = False
+    recording_thread.join()
+    filename = os.path.join(current_app.root_path, 'recording.wav')
+    save_audio(filename)
+    text, speaker = process_audio(filename)
+    return jsonify({'transcript': text, 'speaker': speaker})
 
-@app.route('/upload', methods=['POST'])
-def upload():
-    if 'file' not in request.files:
-        return 'No file part'
-    file = request.files['file']
-    if file.filename == '':
-        return 'No selected file'
-    if file:
-        filename = os.path.join(current_app.root_path, file.filename)
-        file.save(filename)
-        # Process the audio file here
-        text, speaker = process_audio(filename)
-        # Save the text log
-        with open(os.path.join(current_app.root_path, 'log.txt'), 'a') as log_file:
-            log_file.write(f'{filename}: {speaker} said {text}\n')
-        return 'File uploaded and processed successfully'
+def record_audio():
+    global is_recording, frames
+    p = pyaudio.PyAudio()
+    stream = p.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=1024)
+    while is_recording:
+        data = stream.read(1024)
+        frames.append(data)
+    stream.stop_stream()
+    stream.close()
+    p.terminate()
+
+def save_audio(filename):
+    global frames
+    p = pyaudio.PyAudio()
+    wf = wave.open(filename, 'wb')
+    wf.setnchannels(1)
+    wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+    wf.setframerate(44100)
+    wf.writeframes(b''.join(frames))
+    wf.close()
 
 def process_audio(filename):
     try:
