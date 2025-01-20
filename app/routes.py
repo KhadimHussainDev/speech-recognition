@@ -98,7 +98,7 @@ def transcribe_audio(filename, subscription_key, region):
             speaker_id = len(conversation) % 2 + 1
             speaker = f"Speaker {speaker_id}"
             offset_in_seconds = evt.result.offset / 10_000_000
-            timestamp = str(timedelta(seconds=offset_in_seconds))
+            timestamp = time.strftime("%M:%S", time.gmtime(offset_in_seconds))
             result = {
                 'timestamp': timestamp,
                 'speaker': speaker,
