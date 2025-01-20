@@ -1,0 +1,7 @@
+C:\Users\ME\Desktop\speach\my-flask-app\app\Chorus.wav: Unknown said Error recognizing speech
+C:\Users\ME\Desktop\speach\my-flask-app\app\Chorus.wav: Unknown said Error recognizing speech
+C:\Users\ME\Desktop\speach\my-flask-app\app\Chorus.wav: Unknown said 
+C:\Users\ME\Desktop\speach\my-flask-app\app\Chorus.wav: Unknown said 
+C:\Users\ME\Desktop\speach\my-flask-app\app\Chorus.wav: Unknown said Error
+C:\Users\ME\Desktop\speach\my-flask-app\app\Chorus.wav: Unknown said Speech Recognition canceled
+C:\Users\ME\Desktop\speach\my-flask-app\app\Chorus.wav: Speaker said Caught in the landslide, no escape from reality.
