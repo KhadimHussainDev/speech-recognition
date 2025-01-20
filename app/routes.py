@@ -1,7 +1,8 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
 import os
 import wave
-import pyaudio
+import sounddevice as sd
+import numpy as np
 import threading
 import time
 import azure.cognitiveservices.speech as speechsdk
@@ -44,23 +45,26 @@ def stop_recording():
 
 def record_audio():
     global is_recording, frames
-    p = pyaudio.PyAudio()
-    stream = p.open(format=pyaudio.paInt16, channels=1, rate=44100, input=True, frames_per_buffer=1024)
-    while is_recording:
-        data = stream.read(1024)
-        frames.append(data)
-    stream.stop_stream()
-    stream.close()
-    p.terminate()
+    frames = []
+    def callback(indata, frame_count, time_info, status):
+        if is_recording:
+            frames.append(indata.copy())
+    with sd.InputStream(samplerate=44100, channels=1, callback=callback):
+        while is_recording:
+            sd.sleep(100)
 
 def save_audio(filename):
     global frames
-    p = pyaudio.PyAudio()
+    if not frames:
+        print("No audio data to save.")
+        return
+    frames = np.concatenate(frames, axis=0)
+    frames = (frames * 32767).astype(np.int16)  # Convert to 16-bit PCM format
     wf = wave.open(filename, 'wb')
     wf.setnchannels(1)
-    wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
+    wf.setsampwidth(2)  # 2 bytes for 16-bit PCM
     wf.setframerate(44100)
-    wf.writeframes(b''.join(frames))
+    wf.writeframes(frames.tobytes())
     wf.close()
 
 def transcribe_audio(filename, subscription_key, region):
