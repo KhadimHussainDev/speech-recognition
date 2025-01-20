@@ -39,7 +39,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
     if (nameMatch) {
       speakerNames[entry.speaker] = nameMatch[1];
     }
-    const speakerName = speakerNames[entry.speaker] || entry.speaker;
+    const speakerName = speakerNames[entry.speaker] || "Not Recognized";
     return `Start Time: ${entry.timestamp}\nVoice to text: ${entry.text}\nSpeaker: ${speakerName}\n`;
   }).join('\n');
 
