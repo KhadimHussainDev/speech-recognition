@@ -35,7 +35,7 @@ document.getElementById('endBtn').addEventListener('click', () => {
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
   const updatedLog = log.map(entry => {
-    const nameMatch = entry.text.match(/my name is (\w+)/i);
+    const nameMatch = entry.text.match(/.*my name is (\w+)/i);
     if (nameMatch) {
       speakerNames[entry.speaker] = nameMatch[1];
     }
