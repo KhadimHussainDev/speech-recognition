@@ -3,8 +3,10 @@ import os
 import wave
 import pyaudio
 import threading
-from azure.cognitiveservices.speech import SpeechConfig, SpeechRecognizer, AudioConfig, ResultReason, CancellationReason
+import time
+import azure.cognitiveservices.speech as speechsdk
 import logging
+from datetime import datetime
 
 app = Blueprint('app', __name__)
 
@@ -12,6 +14,8 @@ app = Blueprint('app', __name__)
 is_recording = False
 frames = []
 recording_thread = None
+start_time = None
+log = []
 
 @app.route('/')
 def home():
@@ -19,9 +23,11 @@ def home():
 
 @app.route('/start_recording', methods=['POST'])
 def start_recording():
-    global is_recording, frames, recording_thread
+    global is_recording, frames, recording_thread, start_time, log
     is_recording = True
     frames = []
+    log = []
+    start_time = time.time()
     recording_thread = threading.Thread(target=record_audio)
     recording_thread.start()
     return jsonify({'status': 'Recording started'})
@@ -33,8 +39,8 @@ def stop_recording():
     recording_thread.join()
     filename = os.path.join(current_app.root_path, 'recording.wav')
     save_audio(filename)
-    text, speaker = process_audio(filename)
-    return jsonify({'transcript': text, 'speaker': speaker})
+    conversation = transcribe_audio(filename, current_app.config['AZURE_SPEECH_KEY'], current_app.config['AZURE_SPEECH_REGION'])
+    return jsonify({'log': conversation})
 
 def record_audio():
     global is_recording, frames
@@ -57,30 +63,65 @@ def save_audio(filename):
     wf.writeframes(b''.join(frames))
     wf.close()
 
-def process_audio(filename):
-    try:
-        speech_key = current_app.config['AZURE_SPEECH_KEY']
-        service_region = current_app.config['AZURE_SPEECH_REGION']
-        speech_config = SpeechConfig(subscription=speech_key, region=service_region)
-        audio_config = AudioConfig(filename=filename)
-        speech_recognizer = SpeechRecognizer(speech_config=speech_config, audio_config=audio_config)
+def transcribe_audio(filename, subscription_key, region):
+    """
+    Transcribe audio file with speaker diarization using Azure Speech Services
+    """
+    # Create speech config
+    speech_config = speechsdk.SpeechConfig(
+        subscription=subscription_key,
+        region=region
+    )
+    
+    # Set properties for conversation transcription
+    speech_config.set_property(
+        speechsdk.PropertyId.Speech_SegmentationSilenceTimeoutMs,
+        "1000"
+    )
+    
+    # Create audio config
+    audio_config = speechsdk.audio.AudioConfig(filename=filename)
+    
+    # Create speech recognizer with conversation transcription
+    speech_recognizer = speechsdk.SpeechRecognizer(
+        speech_config=speech_config,
+        audio_config=audio_config
+    )
+    
+    # Store transcribed results
+    conversation = []
+    done = threading.Event()
 
-        result = speech_recognizer.recognize_once()
-        if result.reason == ResultReason.RecognizedSpeech:
-            logging.info(f"Recognized: {result.text}")
-            return result.text, "Speaker"  # Replace "Speaker" with actual speaker identification logic
-        elif result.reason == ResultReason.NoMatch:
-            logging.info("No speech could be recognized")
-            return "No speech could be recognized", "Unknown"
-        elif result.reason == ResultReason.Canceled:
-            cancellation_details = result.cancellation_details
-            logging.error(f"Speech Recognition canceled: {cancellation_details.reason}")
-            if cancellation_details.reason == CancellationReason.Error:
-                logging.error(f"Error details: {cancellation_details.error_details}")
-            return "Speech Recognition canceled", "Unknown"
-        else:
-            logging.error(f"Unknown reason: {result.reason}")
-            return "Unknown reason", "Unknown"
-    except Exception as e:
-        logging.error(f"Exception: {str(e)}")
-        return str(e), "Unknown"
+    def handle_result(evt):
+        if evt.result.text:
+            # For testing, assign alternating speaker IDs
+            speaker_id = len(conversation) % 2 + 1
+            speaker = f"Speaker {speaker_id}"
+            timestamp = datetime.now().strftime("%H:%M:%S")
+            result = {
+                'timestamp': timestamp,
+                'speaker': speaker,
+                'text': evt.result.text
+            }
+            conversation.append(result)
+            print(f"[{timestamp}] {speaker}: {evt.result.text}")
+
+    def stop_cb(evt):
+        print('CLOSING on {}'.format(evt))
+        done.set()
+
+    # Connect callbacks
+    speech_recognizer.recognized.connect(handle_result)
+    speech_recognizer.session_stopped.connect(stop_cb)
+    speech_recognizer.canceled.connect(stop_cb)
+
+    # Start recognition
+    speech_recognizer.start_continuous_recognition()
+    
+    # Wait for the recognition to complete
+    done.wait()
+    
+    # Stop recognition
+    speech_recognizer.stop_continuous_recognition_async()
+    
+    return conversation

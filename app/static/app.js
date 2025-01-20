@@ -1,5 +1,5 @@
-let transcript = '';
-let speaker = '';
+let log = [];
+let speakerNames = {};
 
 document.getElementById('startBtn').addEventListener('click', () => {
   fetch('/start_recording', {
@@ -22,10 +22,8 @@ document.getElementById('endBtn').addEventListener('click', () => {
   })
     .then(response => response.json())
     .then(data => {
-      console.log('Transcript:', data.transcript);
-      console.log('Speaker:', data.speaker);
-      transcript = data.transcript;
-      speaker = data.speaker;
+      log = data.log;
+      console.log('Log:', log);
       document.getElementById('startBtn').disabled = false;
       document.getElementById('endBtn').disabled = true;
       document.getElementById('downloadBtn').disabled = false;
@@ -36,8 +34,16 @@ document.getElementById('endBtn').addEventListener('click', () => {
 });
 
 document.getElementById('downloadBtn').addEventListener('click', () => {
-  const text = `Speaker: ${speaker}\nTranscript: ${transcript}`;
-  const blob = new Blob([text], { type: 'text/plain' });
+  const updatedLog = log.map(entry => {
+    const nameMatch = entry.text.match(/my name is (\w+)/i);
+    if (nameMatch) {
+      speakerNames[entry.speaker] = nameMatch[1];
+    }
+    const speakerName = speakerNames[entry.speaker] || entry.speaker;
+    return `Speaker: ${speakerName}\nText: ${entry.text}\n`;
+  }).join('\n');
+
+  const blob = new Blob([updatedLog], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
