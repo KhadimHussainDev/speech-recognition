@@ -8,6 +8,9 @@ import time
 import azure.cognitiveservices.speech as speechsdk
 import logging
 from datetime import datetime, timedelta
+from pydub import AudioSegment
+from pydub.playback import play
+import io
 
 app = Blueprint('app', __name__)
 
@@ -53,19 +56,20 @@ def record_audio():
         while is_recording:
             sd.sleep(100)
 
+# Update the save_audio function
 def save_audio(filename):
     global frames
     if not frames:
         print("No audio data to save.")
         return
     frames = np.concatenate(frames, axis=0)
-    frames = (frames * 32767).astype(np.int16)  # Convert to 16-bit PCM format
-    wf = wave.open(filename, 'wb')
-    wf.setnchannels(1)
-    wf.setsampwidth(2)  # 2 bytes for 16-bit PCM
-    wf.setframerate(44100)
-    wf.writeframes(frames.tobytes())
-    wf.close()
+    audio = AudioSegment(
+        frames.tobytes(),
+        frame_rate=44100,
+        sample_width=frames.dtype.itemsize,
+        channels=1
+    )
+    audio.export(filename, format="wav")
 
 def transcribe_audio(filename, subscription_key, region):
     """
