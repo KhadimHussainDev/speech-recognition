@@ -40,7 +40,7 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
       speakerNames[entry.speaker] = nameMatch[1];
     }
     const speakerName = speakerNames[entry.speaker] || entry.speaker;
-    return `Speaker: ${speakerName}\nText: ${entry.text}\n`;
+    return `Time:${entry.timestamp}\nSpeaker: ${speakerName}\nText: ${entry.text}\n`;
   }).join('\n');
 
   const blob = new Blob([updatedLog], { type: 'text/plain' });

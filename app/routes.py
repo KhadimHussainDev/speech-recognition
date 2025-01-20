@@ -6,7 +6,7 @@ import threading
 import time
 import azure.cognitiveservices.speech as speechsdk
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Blueprint('app', __name__)
 
@@ -97,7 +97,8 @@ def transcribe_audio(filename, subscription_key, region):
             # For testing, assign alternating speaker IDs
             speaker_id = len(conversation) % 2 + 1
             speaker = f"Speaker {speaker_id}"
-            timestamp = datetime.now().strftime("%H:%M:%S")
+            offset_in_seconds = evt.result.offset / 10_000_000
+            timestamp = str(timedelta(seconds=offset_in_seconds))
             result = {
                 'timestamp': timestamp,
                 'speaker': speaker,
