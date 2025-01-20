@@ -3,3 +3,4 @@ azure-cognitiveservices-speech==1.42.0
 sounddevice==0.5.1
 numpy==1.26.4
 gunicorn==20.1.0
+uvicorn=0.34.0
