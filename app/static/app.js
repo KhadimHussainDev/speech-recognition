@@ -1,17 +1,29 @@
 document.getElementById('startBtn').addEventListener('click', () => {
-  fetch('/start_recognition', { method: 'POST' })
-    .then(response => response.json())
-    .then(data => {
-      console.log(data.status);
-      document.getElementById('startBtn').disabled = true;
-      document.getElementById('endBtn').disabled = false;
-      document.getElementById('downloadBtn').disabled = true;
-      startPolling();
+  // Request microphone access
+  navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+      // Microphone access granted
+      console.log('Microphone access granted');
+      fetch('/start_recognition', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+          console.log(data.status);
+          document.getElementById('startBtn').disabled = true;
+          document.getElementById('endBtn').disabled = false;
+          document.getElementById('downloadBtn').disabled = true;
+          startPolling();
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
     })
     .catch(error => {
-      console.error('Error:', error);
+      // Microphone access denied
+      console.error('Microphone access denied:', error);
+      alert('Microphone access is required for speech recognition.');
     });
 });
+
 
 document.getElementById('endBtn').addEventListener('click', () => {
   fetch('/stop_recognition', { method: 'POST' })
