@@ -3,7 +3,7 @@ import threading
 import time
 import azure.cognitiveservices.speech as speechsdk
 import json
-
+import os
 app = Blueprint('app', __name__)
 
 # Global variables for recording
@@ -11,7 +11,11 @@ is_recording = False
 recognition_thread = None
 start_time = None
 log_file_path = '/home/log.json'
+log_dir = os.path.dirname(log_file_path)
 
+# Ensure the directory exists
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
 @app.route('/')
 def home():
     return render_template('home.html')
@@ -39,9 +43,10 @@ def stop_recognition():
         log_data = json.load(log_file)
     print("Recognition stopped. Log:", log_data)  # Debugging statement
     return jsonify({'log': log_data})
-
+results = []
 def recognize_speech(app_context):
     global is_recording, log_file_path
+    results.append("recognize_speech")
 
     with app_context.app_context():
         # Create speech config
@@ -77,6 +82,7 @@ def recognize_speech(app_context):
                 }
                 print(result)
                 conversation.append(result)
+                results.append(result)
                 # Append to the log file
                 with open(log_file_path, 'r+') as log_file:
                     log_data = json.load(log_file)
@@ -104,3 +110,8 @@ def recognize_speech(app_context):
         # Stop recognition
         speech_recognizer.stop_continuous_recognition_async()
         done.wait()
+
+@app.route('/get_results', methods=['GET'])
+def get_results():
+    global results
+    return jsonify(results)

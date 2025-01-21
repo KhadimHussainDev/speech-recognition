@@ -6,6 +6,7 @@ document.getElementById('startBtn').addEventListener('click', () => {
       document.getElementById('startBtn').disabled = true;
       document.getElementById('endBtn').disabled = false;
       document.getElementById('downloadBtn').disabled = true;
+      startPolling();
     })
     .catch(error => {
       console.error('Error:', error);
@@ -21,6 +22,7 @@ document.getElementById('endBtn').addEventListener('click', () => {
       document.getElementById('startBtn').disabled = false;
       document.getElementById('endBtn').disabled = true;
       document.getElementById('downloadBtn').disabled = false;
+      stopPolling();
     })
     .catch(error => {
       console.error('Error:', error);
@@ -48,3 +50,21 @@ document.getElementById('downloadBtn').addEventListener('click', () => {
   a.click();
   document.body.removeChild(a);
 });
+let pollingInterval;
+
+function startPolling() {
+  pollingInterval = setInterval(() => {
+    fetch('/get_results')
+      .then(response => response.json())
+      .then(data => {
+        console.log('Results:', data);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+  }, 1000); // Poll every second
+}
+
+function stopPolling() {
+  clearInterval(pollingInterval);
+}
