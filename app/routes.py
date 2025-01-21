@@ -1,10 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
-import os
 import threading
 import time
 import azure.cognitiveservices.speech as speechsdk
-import logging
-from datetime import datetime, timedelta
 import json
 
 app = Blueprint('app', __name__)
