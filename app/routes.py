@@ -49,6 +49,8 @@ def recognize_speech(app_context):
     results.append("recognize_speech")
 
     with app_context.app_context():
+        results.append("appcontext")
+
         # Create speech config
         speech_config = speechsdk.SpeechConfig(
             subscription=current_app.config['AZURE_SPEECH_KEY'],
