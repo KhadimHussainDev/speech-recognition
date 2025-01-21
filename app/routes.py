@@ -75,6 +75,7 @@ def recognize_speech(app_context):
                     'speaker': speaker,
                     'text': evt.result.text
                 }
+                print(result)
                 conversation.append(result)
                 # Append to the log file
                 with open(log_file_path, 'r+') as log_file:
