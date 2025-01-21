@@ -71,6 +71,7 @@ def recognize_speech(app_context):
         done = threading.Event()
 
         def handle_result(evt):
+            results.append("handle_result")
             if evt.result.text:
                 # For testing, assign alternating speaker IDs
                 speaker_id = len(conversation) % 2 + 1
