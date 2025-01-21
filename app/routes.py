@@ -10,7 +10,7 @@ app = Blueprint('app', __name__)
 is_recording = False
 recognition_thread = None
 start_time = None
-log_file_path = 'log.json'
+log_file_path = '/home/log.json'
 
 @app.route('/')
 def home():
